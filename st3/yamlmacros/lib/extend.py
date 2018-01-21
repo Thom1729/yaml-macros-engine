@@ -1,8 +1,8 @@
 from collections import OrderedDict
 from functools import reduce
 
-from YAMLMacros.api import get_yaml_instance
-from YAMLMacros.src.util import deprecated, flatten
+from yamlmacros import get_yaml_instance
+from yamlmacros.src.util import deprecated, flatten
 
 class Operation():
     def __init__(self, extension):
@@ -51,3 +51,20 @@ def extend(*items):
     with open(base, 'r') as base_file:
         syntax = yaml.load(base_file)
     return Merge(extension).apply(syntax)
+
+
+def yaml_merge(node, eval, arguments):
+    d = list(eval.loader.construct_yaml_map(node))[0]
+
+    merges = d.merge
+    setattr(d, '_yaml_merge', [])
+
+    print(merges)
+
+    for i, merge in merges:
+        print(merge)
+        d.update(merge)
+
+    return d
+
+yaml_merge.raw = True

@@ -6,10 +6,10 @@ import importlib
 import ruamel.yaml
 import functools
 
-from YAMLMacros.src.yaml_provider import get_yaml_instance
-from YAMLMacros.src.context import get_context
-from YAMLMacros.src.context import set_context
-from YAMLMacros.src.util import apply, merge
+from yamlmacros.src.yaml_provider import get_yaml_instance
+from yamlmacros.src.context import get_context
+from yamlmacros.src.context import set_context
+from yamlmacros.src.util import apply, merge
 
 class MacroError(Exception):
     def __init__(self, message, node):

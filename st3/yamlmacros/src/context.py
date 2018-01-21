@@ -1,6 +1,6 @@
 import threading
 from contextlib import contextmanager
-from YAMLMacros.src.util import merge
+from yamlmacros.src.util import merge
 
 _ns = threading.local()
 

@@ -1,5 +1,5 @@
-from YAMLMacros.api import process_macros
-from YAMLMacros.api import get_st_resource
+from yamlmacros import process_macros
+from yamlmacros import get_st_resource
 
 def include(path):
     with open(path, 'r') as file:

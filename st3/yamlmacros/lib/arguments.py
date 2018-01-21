@@ -1,5 +1,5 @@
-from YAMLMacros.api import apply as _apply
-from YAMLMacros.api import raw_macro
+from yamlmacros import apply as _apply
+from yamlmacros import raw_macro
 
 import copy
 
