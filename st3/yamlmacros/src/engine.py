@@ -44,18 +44,16 @@ def apply_transformation(loader, node, transform):
         if isinstance(node, ruamel.yaml.ScalarNode):
             args = loader.construct_scalar(node)
         elif isinstance(node, ruamel.yaml.SequenceNode):
-            args = loader.construct_sequence(node)
+            args = list(loader.construct_yaml_seq(node))[0]
         elif isinstance(node, ruamel.yaml.MappingNode):
+            args = list(loader.construct_yaml_map(node))[0]
+
             if any(
                 param.kind == Parameter.VAR_POSITIONAL
                 for name, param in signature(transform).parameters.items()
             ):
                 # Before Python 3.6, **kwargs will not preserve order.
-                ret = ruamel.yaml.comments.CommentedMap()
-                loader.construct_mapping(node, ret)
-                args = list(ret.items())
-            else:
-                args = loader.construct_mapping(node)
+                args = list(args.items())
 
         return apply(transform, args)
 
