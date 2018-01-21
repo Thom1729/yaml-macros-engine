@@ -61,15 +61,22 @@ def apply_transformation(loader, node, transform):
 
 def macro_multi_constructor(macros):
     def multi_constructor(loader, suffix, node):
-        try:
-            macro = macros[suffix]
-        except KeyError as e:
-            raise MacroError('Unknown macro "%s".' % suffix, node) from e
+        names = suffix.split(':')
 
-        try:
-            return apply_transformation(loader, node, macros[suffix])
-        except Exception as e:
-            raise MacroError('Error in macro execution.', node) from e
+        ret = node
+
+        for name in reversed(names):
+            try:
+                macro = macros[name]
+            except KeyError as e:
+                raise MacroError('Unknown macro "%s".' % name, ret) from e
+
+            try:
+                ret = apply_transformation(loader, ret, macro)
+            except Exception as e:
+                raise MacroError('Error in macro execution.', ret) from e
+
+        return ret
 
     return multi_constructor
 
