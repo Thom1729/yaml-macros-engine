@@ -39,6 +39,8 @@ def apply_transformation(loader, node, transform):
 
             return loader.construct_object(node, deep=True)
 
+        eval.loader = loader
+
         return transform(node, arguments=get_context(), eval=eval)
     else:
         if isinstance(node, ruamel.yaml.ScalarNode):
@@ -54,6 +56,8 @@ def apply_transformation(loader, node, transform):
             ):
                 # Before Python 3.6, **kwargs will not preserve order.
                 args = list(args.items())
+        else:
+            args = node
 
         return apply(transform, args)
 
@@ -78,7 +82,7 @@ def macro_multi_constructor(macros):
 
     return multi_constructor
 
-@functools.lru_cache(maxsize=16)
+# @functools.lru_cache(maxsize=16)
 def get_parse(input):
     yaml = get_yaml_instance()
     stream = io.StringIO(input)

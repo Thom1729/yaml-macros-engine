@@ -15,11 +15,15 @@ def get_yaml_instance(
 ):
     yaml = ruamel.yaml.YAML(**kwargs)
 
-    yaml.Constructor = clone_class(yaml.Constructor)
+    old_constructor = yaml.Constructor
+
+    yaml.Constructor = clone_class(old_constructor)
     yaml.Representer = clone_class(yaml.Representer)
 
     yaml.version = version
     yaml.indent(**indent);
+
+    yaml.Constructor.yaml_constructors = old_constructor.yaml_constructors.copy()
 
     yaml.Representer.add_representer(OrderedDict, lambda self, data: self.represent_mapping('tag:yaml.org,2002:map', data))
 

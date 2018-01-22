@@ -56,15 +56,12 @@ def extend(*items):
 def yaml_merge(node, eval, arguments):
     d = list(eval.loader.construct_yaml_map(node))[0]
 
+    yield d
+
     merges = d.merge
     setattr(d, '_yaml_merge', [])
 
-    print(merges)
-
     for i, merge in merges:
-        print(merge)
         d.update(merge)
-
-    return d
 
 yaml_merge.raw = True
