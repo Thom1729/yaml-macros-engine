@@ -1,8 +1,8 @@
 from collections import OrderedDict
 from functools import reduce
 
-from YAMLMacros.api import get_yaml_instance
-from YAMLMacros.src.util import deprecated, flatten
+from yamlmacros import get_yaml_instance
+from ..src.util import deprecated, flatten
 
 class Operation():
     def __init__(self, extension):

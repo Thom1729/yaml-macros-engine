@@ -2,9 +2,9 @@ import traceback
 import time
 from os import path
 
-from YAMLMacros.api import process_macros
-from YAMLMacros.api import get_yaml_instance
-from YAMLMacros.src.engine import MacroError
+from .engine import process_macros
+from .yaml_provider import get_yaml_instance
+from .engine import MacroError
 
 def build(source_text, destination_path, error_stream, arguments, error_highlighter):
     t0 = time.perf_counter()
