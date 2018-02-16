@@ -4,7 +4,8 @@ from yamlmacros import raw_macro
 import copy
 
 @raw_macro
-def argument(name, default=None, *, eval, arguments):
+def argument(name, default=None, *, eval, loader):
+    arguments = loader.context
     if name.value in arguments:
         return arguments[name.value]
     elif default:
@@ -22,7 +23,7 @@ def if_(condition, then, else_=None, *, eval):
         return None
 
 @raw_macro
-def foreach(in_, value, *, as_=None, eval):
+def foreach(in_, value, *, as_=None, eval, loader):
     collection = eval(in_)
 
     if isinstance(collection, dict):
@@ -31,6 +32,9 @@ def foreach(in_, value, *, as_=None, eval):
         items = enumerate(collection)
     else:
         raise TypeError('Invalid collection.')
+
+    key_binding = 'key'
+    value_binding = 'value'
 
     if as_:
         as_ = eval(as_)
@@ -53,18 +57,22 @@ def foreach(in_, value, *, as_=None, eval):
         value_binding = 'value'
 
     return [
-        eval(copy.deepcopy(value), {
+        _with(loader, copy.deepcopy(value), {
             key_binding: k,
             value_binding: v,
         })
         for k, v in items
     ]
 
+def _with(loader, node, arguments):
+    with loader.set_context(**arguments):
+        return loader.construct_object(node, deep=True)
+
 @raw_macro
-def format(string, bindings=None, *, eval, arguments):
+def format(string, bindings=None, *, eval, loader):
     if bindings:
         bindings = eval(bindings)
     else:
-        bindings = arguments
+        bindings = loader.context
 
     return _apply(string.value.format, bindings)

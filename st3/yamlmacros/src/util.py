@@ -48,8 +48,8 @@ def merge(*dicts):
     return ret
 
 def raw_macro(fn):
-    def ret(node, eval, arguments):
-        extras = { 'eval': eval, 'arguments': arguments }
+    def ret(node, loader, eval):
+        extras = { 'eval': eval, 'loader': loader }
         extras = {
             k:v for k, v in extras.items() if k in arg_names
         }
@@ -59,7 +59,11 @@ def raw_macro(fn):
         elif isinstance(node, ruamel.yaml.SequenceNode):
             return fn(*node.value, **extras)
         elif isinstance(node, ruamel.yaml.MappingNode):
-            kwargs = fix_keywords({ eval(k): v for k, v in node.value })
+            kwargs = fix_keywords({
+                loader.construct_object(k, deep=True): v
+                for k, v in node.value
+            })
+
             collisions = (set(kwargs) & set(extras))
             if collisions:
                 raise TypeError('Keyword parameters %s would be shadowed by raw macro parameters.' % str(collisions))

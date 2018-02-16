@@ -1,16 +1,23 @@
 from yamlmacros import process_macros
 from yamlmacros import get_st_resource
+from yamlmacros import raw_macro
 
-def include(path):
-    with open(path, 'r') as file:
+from yamlmacros.src.util import merge
+
+@raw_macro
+def include(path, *, loader):
+    path_str = loader.construct_scalar(path)
+
+    with open(path_str, 'r') as file:
         return process_macros(
             file.read(),
-            arguments={ "file_path": path },
+            arguments=merge(loader.context, { "file_path": path_str }),
         )
 
-def include_resource(resource):
-    file_path, file_contents = get_st_resource(resource)
+@raw_macro
+def include_resource(resource, *, loader):
+    file_path, file_contents = get_st_resource(loader.construct_scalar(resource))
     return process_macros(
         file_contents,
-        arguments={ "file_path": file_path },
+        arguments=merge(loader.context, { "file_path": file_path }),
     )
