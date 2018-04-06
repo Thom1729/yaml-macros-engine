@@ -24,3 +24,12 @@ def get_yaml_instance(
     yaml.Representer.add_representer(OrderedDict, lambda self, data: self.represent_mapping('tag:yaml.org,2002:map', data))
 
     return yaml
+
+from .custom_constructor import CustomConstructor
+
+def get_constructor():
+    yaml = ruamel.yaml.YAML()
+    yaml._constructor = CustomConstructor(loader=yaml)
+    yaml.version = (1, 2)
+
+    return yaml.constructor

@@ -3,19 +3,16 @@ import sys
 import io
 from inspect import signature, Parameter
 import importlib
-import ruamel.yaml
 import functools
 
-from .yaml_provider import get_yaml_instance
-from .context import get_context
-from .context import set_context
+from .yaml_provider import get_yaml_instance, get_constructor
 from .util import apply, merge
 
 class MacroError(Exception):
-    def __init__(self, message, node):
+    def __init__(self, message, node, context=None):
         self.message = message
         self.node = node
-        self.context = get_context()
+        self.context = context
 
 def load_macros(macro_path):
     sys.path.append(os.getcwd())
@@ -32,28 +29,19 @@ def load_macros(macro_path):
 
 def apply_transformation(loader, node, transform):
     if getattr(transform, 'raw', False):
-        def eval(node, arguments=None):
-            if arguments:
-                with set_context(**arguments):
-                    return eval(node)
+        def eval(node):
+            return loader.construct_object(node)
 
-            return loader.construct_object(node, deep=True)
-
-        return transform(node, arguments=get_context(), eval=eval)
+        return transform(node, eval=eval, loader=loader)
     else:
-        if isinstance(node, ruamel.yaml.ScalarNode):
-            args = loader.construct_scalar(node)
-        elif isinstance(node, ruamel.yaml.SequenceNode):
-            args = list(loader.construct_yaml_seq(node))[0]
-        elif isinstance(node, ruamel.yaml.MappingNode):
-            args = list(loader.construct_yaml_map(node))[0]
+        args = loader.construct_value_ignore_tag(node)
 
-            if any(
-                param.kind == Parameter.VAR_POSITIONAL
-                for name, param in signature(transform).parameters.items()
-            ):
-                # Before Python 3.6, **kwargs will not preserve order.
-                args = list(args.items())
+        if isinstance(args, dict) and any(
+            param.kind == Parameter.VAR_POSITIONAL
+            for name, param in signature(transform).parameters.items()
+        ):
+            # Before Python 3.6, **kwargs will not preserve order.
+            args = list(args.items())
 
         return apply(transform, args)
 
@@ -62,12 +50,12 @@ def macro_multi_constructor(macros):
         try:
             macro = macros[suffix]
         except KeyError as e:
-            raise MacroError('Unknown macro "%s".' % suffix, node) from e
+            raise MacroError('Unknown macro "%s".' % suffix, node, context=loader.context) from e
 
         try:
             return apply_transformation(loader, node, macros[suffix])
         except Exception as e:
-            raise MacroError('Error in macro execution.', node) from e
+            raise MacroError('Error in macro execution.', node, context=loader.context) from e
 
     return multi_constructor
 
@@ -87,19 +75,19 @@ def get_parse(input):
     return (tree, macros)
 
 def process_macros(input, arguments={}):
-    with set_context(**arguments):
-        tree, macros = get_parse(input)
+    tree, macros = get_parse(input)
 
-        yaml = get_yaml_instance()
+    constructor = get_constructor()
 
-        for handle, macro_path in macros:
-            macros = merge(*[load_macros(path) for path in macro_path.split(',')])
+    for handle, macro_path in macros:
+        macros = merge(*[load_macros(path) for path in macro_path.split(',')])
 
-            yaml.Constructor.add_multi_constructor(handle,
-                macro_multi_constructor(macros)
-            )
+        constructor.add_multi_constructor(handle,
+            macro_multi_constructor(macros)
+        )
 
-        return yaml.constructor.construct_document(tree)
+    with constructor.set_context(**arguments):
+        return constructor.construct_document(tree)
 
 def build_yaml_macros(input, output=None, context=None):
     syntax = process_macros(input, context)
