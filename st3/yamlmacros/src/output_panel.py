@@ -14,6 +14,9 @@ class OutputPanel():
     def show(self):
         self.window.run_command('show_panel', {'panel': 'output.%s' % self.name})
 
+    def write(self, text=''):
+        self.view.run_command('append', {'characters': text })
+
     def print(self, text=''):
         self.view.run_command('append', {'characters': text + '\n'})
 

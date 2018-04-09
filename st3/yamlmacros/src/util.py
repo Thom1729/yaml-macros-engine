@@ -47,6 +47,15 @@ def merge(*dicts):
         ret.update(d)
     return ret
 
+def call_with_known_arguments(fn, **kwargs):
+    arg_names = { name for name, param in signature(fn).parameters.items() }
+
+    known_args = {
+        name: value for name, value in kwargs.items() if name in arg_names
+    }
+
+    return fn(**known_args)
+
 def raw_macro(fn):
     def ret(node, loader, eval):
         extras = { 'eval': eval, 'loader': loader }

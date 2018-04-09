@@ -6,7 +6,7 @@ import importlib
 import functools
 
 from .yaml_provider import get_yaml_instance, get_constructor
-from .util import apply, merge
+from .util import apply, merge, call_with_known_arguments
 
 class MacroError(Exception):
     def __init__(self, message, node, context=None):
@@ -29,10 +29,14 @@ def load_macros(macro_path):
 
 def apply_transformation(loader, node, transform):
     if getattr(transform, 'raw', False):
-        def eval(node):
-            return loader.construct_object(node)
+        return call_with_known_arguments(transform,
+            node=node,
+            loader=loader,
 
-        return transform(node, eval=eval, loader=loader)
+            # Deprecated arguments
+            eval=loader.construct_object,
+            arguments=loader.context,
+        )
     else:
         args = loader.construct_value_ignore_tag(node)
 
