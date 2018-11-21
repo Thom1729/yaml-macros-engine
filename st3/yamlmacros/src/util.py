@@ -1,6 +1,6 @@
 import keyword
 from functools import wraps
-import ruamel.yaml
+from ruamel.yaml import ScalarNode, SequenceNode, MappingNode
 from inspect import signature, Parameter
 
 def fix_keywords(d):
@@ -63,11 +63,11 @@ def raw_macro(fn):
             k:v for k, v in extras.items() if k in arg_names
         }
 
-        if isinstance(node, ruamel.yaml.ScalarNode):
+        if isinstance(node, ScalarNode):
             return fn(node, **extras)
-        elif isinstance(node, ruamel.yaml.SequenceNode):
+        elif isinstance(node, SequenceNode):
             return fn(*node.value, **extras)
-        elif isinstance(node, ruamel.yaml.MappingNode):
+        elif isinstance(node, MappingNode):
             kwargs = fix_keywords({
                 loader.construct_object(k, deep=True): v
                 for k, v in node.value

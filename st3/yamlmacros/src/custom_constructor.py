@@ -1,4 +1,4 @@
-import ruamel.yaml
+from ruamel.yaml import ScalarNode, SequenceNode, MappingNode
 from ruamel.yaml.constructor import RoundTripConstructor
 
 from contextlib import contextmanager
@@ -31,10 +31,9 @@ class CustomConstructor(RoundTripConstructor):
         self.contexts.pop()
 
     def construct_value_ignore_tag(self, node):
-        if isinstance(node, ruamel.yaml.ScalarNode):
+        if isinstance(node, ScalarNode):
             return self.construct_scalar(node)
-        elif isinstance(node, ruamel.yaml.SequenceNode):
+        elif isinstance(node, SequenceNode):
             return list(self.construct_yaml_seq(node))[0]
-        elif isinstance(node, ruamel.yaml.MappingNode):
+        elif isinstance(node, MappingNode):
             return list(self.construct_yaml_map(node))[0]
-    
