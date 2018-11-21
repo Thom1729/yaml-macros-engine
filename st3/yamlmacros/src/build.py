@@ -22,6 +22,7 @@ def build(source_text, destination_path, error_stream, arguments, error_highligh
             error_stream.write('\n')
             error_stream.write(e.message + '\n')
             error_stream.write(str(e.node.start_mark) + '\n')
+            error_stream.print(e.context)
 
             if e.__cause__:
                 handle_error(e.__cause__)

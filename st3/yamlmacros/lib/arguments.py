@@ -23,22 +23,21 @@ def if_(condition, then, else_=None, *, eval):
         return None
 
 @raw_macro
-def foreach(in_, value, *, as_=None, eval, loader):
-    collection = eval(in_)
+def foreach(in_, value, *, as_=None, loader):
+    collection = loader.construct_object(in_)
 
     if isinstance(collection, dict):
         items = collection.items()
     elif isinstance(collection, list):
         items = enumerate(collection)
     else:
-        print(collection)
         raise TypeError('Invalid collection.')
 
     key_binding = 'key'
     value_binding = 'value'
 
     if as_:
-        as_ = eval(as_)
+        as_ = loader.construct_object(as_, deep=True)
 
         if isinstance(as_, dict):
             key_binding = as_.get('key', None)
