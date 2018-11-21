@@ -6,7 +6,7 @@ from .engine import process_macros
 from .yaml_provider import get_yaml_instance
 from .engine import MacroError
 
-def build(source_text, destination_path, error_stream, arguments, error_highlighter=None):
+def build(source_text, destination_path, error_stream, arguments):
     t0 = time.perf_counter()
 
     error_stream.write('Building %s... (%s)\n' % (path.basename(arguments['file_path']), arguments['file_path']))
@@ -26,14 +26,6 @@ def build(source_text, destination_path, error_stream, arguments, error_highligh
 
             if e.__cause__:
                 handle_error(e.__cause__)
-
-            if error_highlighter:
-                error_highlighter.highlight(
-                    e.context.get('file_path'),
-                    e.node.start_mark.index,
-                    e.node.end_mark.index,
-                    e.message,
-                )
         else:
             error_stream.write('\n')
             error_stream.write(''.join(traceback.format_exception(None, e, e.__traceback__)) + '\n')
