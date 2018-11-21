@@ -31,6 +31,7 @@ def foreach(in_, value, *, as_=None, eval, loader):
     elif isinstance(collection, list):
         items = enumerate(collection)
     else:
+        print(collection)
         raise TypeError('Invalid collection.')
 
     key_binding = 'key'
