@@ -1,5 +1,6 @@
+import sublime
+
 from yamlmacros import process_macros
-from yamlmacros import get_st_resource
 from yamlmacros import raw_macro
 
 from yamlmacros.src.util import merge
@@ -20,8 +21,8 @@ def include(path, *, loader):
 
 @raw_macro
 def include_resource(resource, *, loader):
-    file_path, file_contents = get_st_resource(loader.construct_scalar(resource))
+    path = loader.construct_scalar(resource)
     return process_macros(
-        file_contents,
-        arguments=merge(loader.context, { "file_path": file_path }),
+        sublime.load_resource(path),
+        arguments=merge(loader.context, { "file_path": path }),
     )
