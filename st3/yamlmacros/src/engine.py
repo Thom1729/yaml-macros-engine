@@ -8,6 +8,10 @@ import functools
 from .yaml_provider import get_yaml_instance, get_constructor
 from .util import apply, merge, call_with_known_arguments
 
+
+__all__ = ['MacroError', 'process_macros']
+
+
 class MacroError(Exception):
     def __init__(self, message, node, context=None):
         self.message = message

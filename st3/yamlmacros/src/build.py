@@ -6,6 +6,10 @@ from .engine import process_macros
 from .yaml_provider import get_yaml_instance
 from .engine import MacroError
 
+
+__all__ = ['build']
+
+
 def build(source_text, destination_path, error_stream, arguments):
     t0 = time.perf_counter()
 

@@ -2,6 +2,10 @@ from collections import OrderedDict
 
 _RULE_KEYS = ['match', 'scope', 'captures', 'push', 'set', 'pop', 'embed', 'escape', 'with_prototype']
 
+
+__all__ = ['rule', 'meta', 'expect', 'pop_on', 'stack']
+
+
 def _rule_key_order(key):
     try:
         return _RULE_KEYS.index(key)

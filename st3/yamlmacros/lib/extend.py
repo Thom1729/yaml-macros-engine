@@ -4,6 +4,10 @@ from functools import reduce
 from yamlmacros import get_yaml_instance
 from ..src.util import deprecated, flatten
 
+
+__all__ = ['merge', 'prepend', 'all', 'apply', 'extend']
+
+
 class Operation():
     def __init__(self, extension):
         self.extension = extension

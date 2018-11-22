@@ -3,6 +3,10 @@ from functools import wraps
 from ruamel.yaml import ScalarNode, SequenceNode, MappingNode
 from inspect import signature, Parameter
 
+
+__all__ = ['apply', 'deprecated', 'raw_macro']
+
+
 def fix_keywords(d):
     return {
         (k+'_' if keyword.iskeyword(k) else k) : v
@@ -57,8 +61,8 @@ def call_with_known_arguments(fn, **kwargs):
     return fn(**known_args)
 
 def raw_macro(fn):
-    def ret(node, loader, eval):
-        extras = { 'eval': eval, 'loader': loader }
+    def ret(node, loader):
+        extras = { 'loader': loader }
         extras = {
             k:v for k, v in extras.items() if k in arg_names
         }

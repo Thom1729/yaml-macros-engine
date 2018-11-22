@@ -3,6 +3,10 @@ from yamlmacros import raw_macro
 
 import copy
 
+
+__all__ = ['argument', 'if_', 'foreach', 'format']
+
+
 @raw_macro
 def argument(name, default=None, *, loader):
     arguments = loader.context

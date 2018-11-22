@@ -1,6 +1,10 @@
 import ruamel.yaml
 from collections import OrderedDict
 
+
+__all__ = ['get_yaml_instance', 'get_constructor']
+
+
 def clone_class(klass):
     return type(
         'Cloned' + klass.__name__,

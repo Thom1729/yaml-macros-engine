@@ -4,6 +4,10 @@ from yamlmacros import raw_macro
 
 from yamlmacros.src.util import merge
 
+
+__all__ = ['include', 'include_resource']
+
+
 @raw_macro
 def include(path, *, loader):
     path_str = loader.construct_scalar(path)
