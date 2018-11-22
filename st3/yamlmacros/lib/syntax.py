@@ -1,17 +1,18 @@
 from collections import OrderedDict
 
-_RULE_KEYS = [
+
+__all__ = ['meta', 'expect', 'pop_on', 'stack']
+
+
+RULE_KEYS = [
     'match', 'scope', 'captures', 'push', 'set', 'pop',
     'embed', 'escape', 'with_prototype',
 ]
 
 
-__all__ = ['rule', 'meta', 'expect', 'pop_on', 'stack']
-
-
-def _rule_key_order(key):
+def rule_order(pair):
     try:
-        return _RULE_KEYS.index(key)
+        return RULE_KEYS.index(pair[0])
     except ValueError:
         return 0
 
@@ -19,7 +20,7 @@ def _rule_key_order(key):
 def rule(**args):
     return OrderedDict(sorted(
         args.items(),
-        key=lambda kv: _rule_key_order(kv[0]),
+        key=rule_order,
     ))
 
 
