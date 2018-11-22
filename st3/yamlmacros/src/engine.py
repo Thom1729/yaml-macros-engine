@@ -32,10 +32,6 @@ def apply_transformation(loader, node, transform):
         return call_with_known_arguments(transform,
             node=node,
             loader=loader,
-
-            # Deprecated arguments
-            eval=loader.construct_object,
-            arguments=loader.context,
         )
     else:
         args = loader.construct_value_ignore_tag(node)

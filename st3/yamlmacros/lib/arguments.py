@@ -4,21 +4,21 @@ from yamlmacros import raw_macro
 import copy
 
 @raw_macro
-def argument(name, default=None, *, eval, loader):
+def argument(name, default=None, *, loader):
     arguments = loader.context
     if name.value in arguments:
         return arguments[name.value]
     elif default:
-        return eval(default)
+        return loader.construct_object(default)
     else:
         return None
 
 @raw_macro
-def if_(condition, then, else_=None, *, eval):
-    if eval(condition):
-        return eval(then)
+def if_(condition, then, else_=None, *, loader):
+    if loader.load_object(condition):
+        return loader.load_object(then)
     elif else_:
-        return eval(else_)
+        return loader.load_object(else_)
     else:
         return None
 
@@ -69,9 +69,9 @@ def _with(loader, node, arguments):
         return loader.construct_object(node, deep=True)
 
 @raw_macro
-def format(string, bindings=None, *, eval, loader):
+def format(string, bindings=None, *, loader):
     if bindings:
-        bindings = eval(bindings)
+        bindings = loader.construct_object(bindings)
     else:
         bindings = loader.context
 
