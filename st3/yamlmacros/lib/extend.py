@@ -54,16 +54,3 @@ def all(*items):
 
 def apply(base, *extensions):
     return all(*extensions).apply(base)
-
-
-@deprecated('Use !apply instead.')
-def extend(*items):
-    extension = OrderedDict(items)
-    base = extension['_base']
-    del extension['_base']
-
-    yaml = get_yaml_instance()
-
-    with open(base, 'r') as base_file:
-        syntax = yaml.load(base_file)
-    return Merge(extension).apply(syntax)
