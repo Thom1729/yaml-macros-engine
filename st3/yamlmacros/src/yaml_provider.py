@@ -1,6 +1,8 @@
 import ruamel.yaml
 from collections import OrderedDict
 
+from .custom_constructor import CustomConstructor
+
 
 __all__ = ['get_yaml_instance', 'get_constructor']
 
@@ -12,9 +14,10 @@ def clone_class(klass):
         {}
     )
 
+
 def get_yaml_instance(
-    version = (1, 2),
-    indent = { 'mapping': 2, 'sequence': 4, 'offset': 2 },
+    version=(1, 2),
+    indent={'mapping': 2, 'sequence': 4, 'offset': 2},
     **kwargs
 ):
     yaml = ruamel.yaml.YAML(**kwargs)
@@ -23,13 +26,15 @@ def get_yaml_instance(
     yaml.Representer = clone_class(yaml.Representer)
 
     yaml.version = version
-    yaml.indent(**indent);
+    yaml.indent(**indent)
 
-    yaml.Representer.add_representer(OrderedDict, lambda self, data: self.represent_mapping('tag:yaml.org,2002:map', data))
+    yaml.Representer.add_representer(
+        OrderedDict,
+        lambda self, data: self.represent_mapping('tag:yaml.org,2002:map', data)
+    )
 
     return yaml
 
-from .custom_constructor import CustomConstructor
 
 def get_constructor():
     yaml = ruamel.yaml.YAML()

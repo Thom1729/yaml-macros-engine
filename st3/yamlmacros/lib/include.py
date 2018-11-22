@@ -16,13 +16,14 @@ def include(path, *, loader):
     with open(path_str, 'r') as file:
         return process_macros(
             file.read(),
-            arguments=merge(loader.context, { "file_path": path_str }),
+            arguments=merge(loader.context, {"file_path": path_str}),
         )
+
 
 @raw_macro
 def include_resource(resource, *, loader):
     path = loader.construct_scalar(resource)
     return process_macros(
         sublime.load_resource(path),
-        arguments=merge(loader.context, { "file_path": path }),
+        arguments=merge(loader.context, {"file_path": path}),
     )

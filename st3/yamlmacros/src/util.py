@@ -9,9 +9,10 @@ __all__ = ['apply', 'deprecated', 'raw_macro']
 
 def fix_keywords(d):
     return {
-        (k+'_' if keyword.iskeyword(k) else k) : v
+        (k + '_' if keyword.iskeyword(k) else k): v
         for k, v in d.items()
     }
+
 
 def apply(fn, args):
     if isinstance(args, dict):
@@ -20,6 +21,7 @@ def apply(fn, args):
         return fn(*args)
     else:
         return fn(args)
+
 
 def deprecated(*args):
     def _deprecated(f, message=None):
@@ -38,6 +40,7 @@ def deprecated(*args):
     else:
         return lambda f: _deprecated(f, *args)
 
+
 def flatten(*args):
     for arg in args:
         if isinstance(arg, list):
@@ -45,14 +48,16 @@ def flatten(*args):
         elif arg is not None:
             yield arg
 
+
 def merge(*dicts):
     ret = {}
     for d in dicts:
         ret.update(d)
     return ret
 
+
 def call_with_known_arguments(fn, **kwargs):
-    arg_names = { name for name, param in signature(fn).parameters.items() }
+    arg_names = {name for name, param in signature(fn).parameters.items()}
 
     known_args = {
         name: value for name, value in kwargs.items() if name in arg_names
@@ -60,11 +65,12 @@ def call_with_known_arguments(fn, **kwargs):
 
     return fn(**known_args)
 
+
 def raw_macro(fn):
     def ret(node, loader):
-        extras = { 'loader': loader }
+        extras = {'loader': loader}
         extras = {
-            k:v for k, v in extras.items() if k in arg_names
+            k: v for k, v in extras.items() if k in arg_names
         }
 
         if isinstance(node, ScalarNode):
@@ -79,7 +85,10 @@ def raw_macro(fn):
 
             collisions = (set(kwargs) & set(extras))
             if collisions:
-                raise TypeError('Keyword parameters %s would be shadowed by raw macro parameters.' % str(collisions))
+                raise TypeError(
+                    'Keyword parameters %s would be shadowed by '
+                    'raw macro parameters.' % str(collisions)
+                )
 
             return fn(**merge(kwargs, extras))
 
@@ -89,7 +98,7 @@ def raw_macro(fn):
     ):
         raise TypeError('Raw macros using this decorator may not use **kwargs.')
 
-    arg_names = { name for name, param in signature(fn).parameters.items() }
+    arg_names = {name for name, param in signature(fn).parameters.items()}
 
     ret.raw = True
     ret.wrapped = fn

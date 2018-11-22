@@ -8,12 +8,14 @@ from os import path
 from yamlmacros import process_macros
 from yamlmacros.src.yaml_provider import get_yaml_instance
 
-FIXTURES_PATH = 'yaml_macros_engine/tests/fixtures';
+FIXTURES_PATH = 'yaml_macros_engine/tests/fixtures'
+
 
 def load_fixture(*fixture_path):
     return sublime.load_resource(
         path.join('Packages', FIXTURES_PATH, *fixture_path)
     )
+
 
 class TestSyntaxes(TestCase):
 

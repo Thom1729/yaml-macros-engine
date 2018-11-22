@@ -1,6 +1,9 @@
 from collections import OrderedDict
 
-_RULE_KEYS = ['match', 'scope', 'captures', 'push', 'set', 'pop', 'embed', 'escape', 'with_prototype']
+_RULE_KEYS = [
+    'match', 'scope', 'captures', 'push', 'set', 'pop',
+    'embed', 'escape', 'with_prototype',
+]
 
 
 __all__ = ['rule', 'meta', 'expect', 'pop_on', 'stack']
@@ -12,17 +15,20 @@ def _rule_key_order(key):
     except ValueError:
         return 0
 
+
 def rule(**args):
     return OrderedDict(sorted(
         args.items(),
         key=lambda kv: _rule_key_order(kv[0]),
     ))
 
+
 def meta(scope):
     return [
         rule(meta_scope=scope),
         rule(match=r'', pop=True),
     ]
+
 
 def expect(expr, scope, set_context=None):
     ret = [
@@ -37,11 +43,13 @@ def expect(expr, scope, set_context=None):
 
     return ret
 
+
 def pop_on(expr):
     return rule(
         match=r'(?=(?:%s))' % expr,
         pop=True
     )
+
 
 def stack(*contexts):
     return [

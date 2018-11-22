@@ -18,6 +18,7 @@ class MacroError(Exception):
         self.node = node
         self.context = context
 
+
 def load_macros(macro_path):
     sys.path.append(os.getcwd())
     try:
@@ -31,9 +32,11 @@ def load_macros(macro_path):
     finally:
         sys.path.pop()
 
+
 def apply_transformation(loader, node, transform):
     if getattr(transform, 'raw', False):
-        return call_with_known_arguments(transform,
+        return call_with_known_arguments(
+            transform,
             node=node,
             loader=loader,
         )
@@ -49,6 +52,7 @@ def apply_transformation(loader, node, transform):
 
         return apply(transform, args)
 
+
 def macro_multi_constructor(macros):
     def multi_constructor(loader, suffix, node):
         try:
@@ -57,11 +61,12 @@ def macro_multi_constructor(macros):
             raise MacroError('Unknown macro "%s".' % suffix, node, context=loader.context) from e
 
         try:
-            return apply_transformation(loader, node, macros[suffix])
+            return apply_transformation(loader, node, macro)
         except Exception as e:
             raise MacroError('Error in macro execution.', node, context=loader.context) from e
 
     return multi_constructor
+
 
 @functools.lru_cache(maxsize=16)
 def get_parse(input):
@@ -78,6 +83,7 @@ def get_parse(input):
 
     return (tree, macros)
 
+
 def process_macros(input, arguments={}):
     tree, macros = get_parse(input)
 
@@ -86,12 +92,14 @@ def process_macros(input, arguments={}):
     for handle, macro_path in macros:
         macros = merge(*[load_macros(path) for path in macro_path.split(',')])
 
-        constructor.add_multi_constructor(handle,
+        constructor.add_multi_constructor(
+            handle,
             macro_multi_constructor(macros)
         )
 
     with constructor.set_context(**arguments):
         return constructor.construct_document(tree)
+
 
 def build_yaml_macros(input, output=None, context=None):
     syntax = process_macros(input, context)

@@ -17,6 +17,7 @@ def argument(name, default=None, *, loader):
     else:
         return None
 
+
 @raw_macro
 def if_(condition, then, else_=None, *, loader):
     if loader.load_object(condition):
@@ -25,6 +26,7 @@ def if_(condition, then, else_=None, *, loader):
         return loader.load_object(else_)
     else:
         return None
+
 
 @raw_macro
 def foreach(in_, value, *, as_=None, loader):
@@ -68,9 +70,11 @@ def foreach(in_, value, *, as_=None, loader):
         for k, v in items
     ]
 
+
 def _with(loader, node, arguments):
     with loader.set_context(**arguments):
         return loader.construct_object(node, deep=True)
+
 
 @raw_macro
 def format(string, bindings=None, *, loader):

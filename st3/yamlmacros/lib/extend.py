@@ -12,6 +12,7 @@ class Operation():
     def __init__(self, extension):
         self.extension = extension
 
+
 class Merge(Operation):
     def apply(self, base):
         ret = base.copy()
@@ -24,9 +25,11 @@ class Merge(Operation):
 
         return ret
 
+
 class Prepend(Operation):
     def apply(self, base):
         return self.extension + base
+
 
 class All(Operation):
     def apply(self, base):
@@ -36,13 +39,22 @@ class All(Operation):
             base,
         )
 
-def merge(*items): return Merge(OrderedDict(items))
-def prepend(*items): return Prepend(list(items))
-def all(*items): return All(list(items))
+
+def merge(*items):
+    return Merge(OrderedDict(items))
+
+
+def prepend(*items):
+    return Prepend(list(items))
+
+
+def all(*items):
+    return All(list(items))
 
 
 def apply(base, *extensions):
     return all(*extensions).apply(base)
+
 
 @deprecated('Use !apply instead.')
 def extend(*items):

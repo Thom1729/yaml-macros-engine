@@ -21,7 +21,7 @@ def build(source_text, destination_path, error_stream, arguments):
     def done(message):
         out('[{message} in {time:.2f} seconds.]\n'.format(
             message=message,
-            time = time.perf_counter() - t0
+            time=time.perf_counter() - t0
         ))
 
     def handle_error(e):
