@@ -10,11 +10,12 @@ from .engine import MacroError
 __all__ = ['build']
 
 
-def build(source_text, destination_path, error_stream, arguments):
+def build(source_text, destination_path, error_stream=None, arguments={}):
     t0 = time.perf_counter()
 
     def out(*args):
-        print(*args, file=error_stream)
+        if error_stream:
+            print(*args, file=error_stream)
 
     out('Building %s... (%s)' % (path.basename(arguments['file_path']), arguments['file_path']))
 

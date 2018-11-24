@@ -30,12 +30,12 @@ def if_(condition, then, else_=None, *, loader):
 
 @raw_macro
 def foreach(in_, value, *, as_=None, loader):
-    collection = loader.construct_object(in_)
+    collection = loader.construct_object(in_, deep=True)
 
     if isinstance(collection, dict):
         items = collection.items()
     elif isinstance(collection, list):
-        items = enumerate(collection)
+        items = list(enumerate(collection))
     else:
         raise TypeError('Invalid collection.')
 

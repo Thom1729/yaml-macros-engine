@@ -57,7 +57,7 @@ def merge(*dicts):
 
 
 def call_with_known_arguments(fn, **kwargs):
-    arg_names = {name for name, param in signature(fn).parameters.items()}
+    arg_names = signature(fn).parameters.keys()
 
     known_args = {
         name: value for name, value in kwargs.items() if name in arg_names
@@ -83,7 +83,7 @@ def raw_macro(fn):
                 for k, v in node.value
             })
 
-            collisions = (set(kwargs) & set(extras))
+            collisions = set(kwargs) & set(extras)
             if collisions:
                 raise TypeError(
                     'Keyword parameters %s would be shadowed by '
@@ -94,11 +94,11 @@ def raw_macro(fn):
 
     if any(
         param.kind == Parameter.VAR_KEYWORD
-        for name, param in signature(fn).parameters.items()
+        for param in signature(fn).parameters.values()
     ):
         raise TypeError('Raw macros using this decorator may not use **kwargs.')
 
-    arg_names = {name for name, param in signature(fn).parameters.items()}
+    arg_names = set(signature(fn).parameters.keys())
 
     ret.raw = True
     ret.wrapped = fn
