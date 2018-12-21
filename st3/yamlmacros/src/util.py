@@ -57,10 +57,10 @@ def merge(*dicts):
 
 
 def call_with_known_arguments(fn, **kwargs):
-    arg_names = signature(fn).parameters.keys()
+    parameters = signature(fn).parameters
 
     known_args = {
-        name: value for name, value in kwargs.items() if name in arg_names
+        name: value for name, value in kwargs.items() if name in parameters
     }
 
     return fn(**known_args)

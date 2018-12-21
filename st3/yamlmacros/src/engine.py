@@ -25,7 +25,7 @@ def load_macros(macro_path):
         module = importlib.import_module(macro_path)
 
         return {
-            name.rstrip('_'): func
+            name.rstrip('_'): get_macro(func)
             for name, func in module.__dict__.items()
             if callable(func) and not name.startswith('_')
         }
@@ -33,24 +33,31 @@ def load_macros(macro_path):
         sys.path.pop()
 
 
-def apply_transformation(loader, node, transform):
-    if getattr(transform, 'raw', False):
-        return call_with_known_arguments(
-            transform,
+def get_macro(function):
+    if getattr(function, 'raw', False):
+        return lambda node, loader: call_with_known_arguments(
+            function,
             node=node,
             loader=loader,
+
+            # Legacy
+            eval=functools.partial(loader.construct_object, deep=True),
+            arguments=loader.context,
         )
     else:
-        args = loader.construct_value_ignore_tag(node)
+        def macro(node, loader):
+            args = loader.construct_value_ignore_tag(node)
 
-        if isinstance(args, dict) and any(
-            param.kind == Parameter.VAR_POSITIONAL
-            for name, param in signature(transform).parameters.items()
-        ):
-            # Before Python 3.6, **kwargs will not preserve order.
-            args = list(args.items())
+            if isinstance(args, dict) and any(
+                param.kind == Parameter.VAR_POSITIONAL
+                for name, param in signature(function).parameters.items()
+            ):
+                # Before Python 3.6, **kwargs will not preserve order.
+                args = list(args.items())
 
-        return apply(transform, args)
+            return apply(function, args)
+
+        return macro
 
 
 def macro_multi_constructor(macros):
@@ -61,7 +68,7 @@ def macro_multi_constructor(macros):
             raise MacroError('Unknown macro "%s".' % suffix, node, context=loader.context) from e
 
         try:
-            return apply_transformation(loader, node, macro)
+            return macro(node, loader)
         except Exception as e:
             raise MacroError('Error in macro execution.', node, context=loader.context) from e
 
