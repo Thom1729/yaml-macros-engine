@@ -1,30 +1,27 @@
-import sublime
-
 from unittest import TestCase
 from io import StringIO
-import os
-from os import path
 
 from yamlmacros import process_macros
 from yamlmacros.src.yaml_provider import get_yaml_instance
 
-FIXTURES_PATH = 'yaml_macros_engine/tests/fixtures'
+from sublime_lib import ResourcePath
 
 
-def load_fixture(*fixture_path):
-    return sublime.load_resource(
-        path.join('Packages', FIXTURES_PATH, *fixture_path)
-    )
+FIXTURES_PATH = ResourcePath('Packages/yaml_macros_engine/tests/fixtures')
 
 
 class TestSyntaxes(TestCase):
 
     def _test_fixture(self, name):
-        os.chdir(path.join(sublime.packages_path(), FIXTURES_PATH, name))
-        source_text = load_fixture(name, 'source.yaml')
-        answer_text = load_fixture(name, 'answer.yaml')
+        fixtures = FIXTURES_PATH / name
 
-        result = process_macros(source_text)
+        source_text = (fixtures / 'source.yaml').read_text()
+        answer_text = (fixtures / 'answer.yaml').read_text()
+
+        result = process_macros(
+            source_text,
+            relative_root=str(fixtures.file_path())
+        )
 
         out = StringIO()
         serializer = get_yaml_instance()

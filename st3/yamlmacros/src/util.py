@@ -56,14 +56,14 @@ def merge(*dicts):
     return ret
 
 
-def call_with_known_arguments(fn, **kwargs):
-    parameters = signature(fn).parameters
+# def call_with_known_arguments(fn, **kwargs):
+#     parameters = signature(fn).parameters
 
-    known_args = {
-        name: value for name, value in kwargs.items() if name in parameters
-    }
+#     known_args = {
+#         name: value for name, value in kwargs.items() if name in parameters
+#     }
 
-    return fn(**known_args)
+#     return fn(**known_args)
 
 
 def raw_macro(fn):

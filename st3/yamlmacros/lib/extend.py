@@ -1,11 +1,10 @@
 from collections import OrderedDict
 from functools import reduce
 
-from yamlmacros import get_yaml_instance
-from ..src.util import deprecated, flatten
+from ..src.util import flatten
 
 
-__all__ = ['merge', 'prepend', 'all', 'apply', 'extend']
+__all__ = ['merge', 'prepend', 'all', 'apply']
 
 
 class Operation():
