@@ -56,51 +56,24 @@ def merge(*dicts):
     return ret
 
 
-# def call_with_known_arguments(fn, **kwargs):
-#     parameters = signature(fn).parameters
+def run_coroutine(generator, callback):
+    try:
+        result = next(generator)
 
-#     known_args = {
-#         name: value for name, value in kwargs.items() if name in parameters
-#     }
+        while True:
+            try:
+                value = callback(result)
+            except Exception as ex:
+                result = generator.throw(ex)
+            else:
+                result = generator.send(value)
+    except StopIteration as ex:
+        return ex.value
 
-#     return fn(**known_args)
 
+def raw_macro(function):
+    function.raw = True
+    return function
 
-def raw_macro(fn):
-    def ret(node, loader):
-        extras = {'loader': loader}
-        extras = {
-            k: v for k, v in extras.items() if k in arg_names
-        }
-
-        if isinstance(node, ScalarNode):
-            return fn(node, **extras)
-        elif isinstance(node, SequenceNode):
-            return fn(*node.value, **extras)
-        elif isinstance(node, MappingNode):
-            kwargs = fix_keywords({
-                loader.construct_object(k, deep=True): v
-                for k, v in node.value
-            })
-
-            collisions = set(kwargs) & set(extras)
-            if collisions:
-                raise TypeError(
-                    'Keyword parameters %s would be shadowed by '
-                    'raw macro parameters.' % str(collisions)
-                )
-
-            return fn(**merge(kwargs, extras))
-
-    if any(
-        param.kind == Parameter.VAR_KEYWORD
-        for param in signature(fn).parameters.values()
-    ):
-        raise TypeError('Raw macros using this decorator may not use **kwargs.')
-
-    arg_names = set(signature(fn).parameters.keys())
-
-    ret.raw = True
-    ret.wrapped = fn
-
-    return ret
+def is_raw_macro(function):
+    return getattr(function, 'raw', False)

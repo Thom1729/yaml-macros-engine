@@ -41,3 +41,15 @@ class CustomConstructor(RoundTripConstructor):
             return list(self.construct_yaml_seq(node))[0]
         elif isinstance(node, MappingNode):
             return list(self.construct_yaml_map(node))[0]
+
+    def construct_raw(self, node):
+        from .util import fix_keywords
+        if isinstance(node, ScalarNode):
+            return node
+        elif isinstance(node, SequenceNode):
+            return node.value
+        elif isinstance(node, MappingNode):
+            return fix_keywords({
+                self.construct_object(k, deep=True): v
+                for k, v in node.value
+            })

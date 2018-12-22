@@ -1,5 +1,4 @@
-from yamlmacros import apply as _apply
-from yamlmacros import raw_macro
+from yamlmacros import apply as _apply, raw_macro
 
 import copy
 
@@ -8,7 +7,8 @@ __all__ = ['argument', 'if_', 'foreach', 'format']
 
 
 @raw_macro
-def argument(name, default=None, *, loader):
+def argument(name, default=None):
+    loader = yield
     arguments = loader.context
     if name.value in arguments:
         return arguments[name.value]
@@ -19,17 +19,20 @@ def argument(name, default=None, *, loader):
 
 
 @raw_macro
-def if_(condition, then, else_=None, *, loader):
+def if_(condition, then, else_=None):
+    loader = yield
     if loader.load_object(condition):
         return loader.load_object(then)
     elif else_:
         return loader.load_object(else_)
     else:
         return None
+if_.raw = True
 
 
 @raw_macro
-def foreach(in_, value, *, as_=None, loader):
+def foreach(in_, value, *, as_=None):
+    loader = yield
     collection = loader.construct_object(in_, deep=True)
 
     if isinstance(collection, dict):
@@ -76,11 +79,11 @@ def _with(loader, node, arguments):
         return loader.construct_object(node, deep=True)
 
 
-@raw_macro
-def format(string, bindings=None, *, loader):
+def format(string, bindings=None):
+    loader = yield
     if bindings:
-        bindings = loader.construct_object(bindings)
+        pass
     else:
         bindings = loader.context
 
-    return _apply(string.value.format, bindings)
+    return _apply(string.format, bindings)

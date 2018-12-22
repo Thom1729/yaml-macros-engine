@@ -1,10 +1,10 @@
 import io
-from inspect import signature, Parameter
+from inspect import signature, Parameter, isgeneratorfunction
 import importlib
 from functools import partial, lru_cache
 
 from .yaml_provider import get_yaml_instance, get_constructor
-from .util import apply, merge
+from .util import apply, merge, run_coroutine, is_raw_macro
 from .load_macros import temporary_package
 
 
@@ -41,20 +41,26 @@ def load_macros(macro_path, macros_root):
 
 def get_macro(function):
     parameters = signature(function).parameters
-    if getattr(function, 'raw', False):
-        def macro(node, loader):
-            kwargs = {
-                'loader': loader,
-                'eval': partial(loader.construct_object, deep=True),
-                'arguments': loader.context,
-            }
+    if is_raw_macro(function):
+        if isgeneratorfunction(function):
+            def macro(node, loader):
+                args = loader.construct_raw(node)
+                return apply(function, args)
+            return macro
+        else:
+            def macro(node, loader):
+                kwargs = {
+                    'loader': loader,
+                    'eval': partial(loader.construct_object, deep=True),
+                    'arguments': loader.context,
+                }
 
-            return function(node, **{
-                key: value
-                for key, value in kwargs.items()
-                if key in parameters
-            })
-        return macro
+                return function(node, **{
+                    key: value
+                    for key, value in kwargs.items()
+                    if key in parameters
+                })
+            return macro
     else:
         def macro(node, loader):
             args = loader.construct_value_ignore_tag(node)
@@ -78,7 +84,14 @@ def macros_constructor(macros, loader, suffix, node):
         raise MacroError('Unknown macro "%s".' % suffix, node, context=loader.context) from e
 
     try:
-        return macro(node, loader)
+        def callback(value):
+            return loader
+        result = macro(node, loader)
+        if hasattr(result, '__next__'):
+            return run_coroutine(result, callback)
+        else:
+            return result
+        # return macro(node, loader)
     except Exception as e:
         raise MacroError('Error in macro execution.', node, context=loader.context) from e
 
