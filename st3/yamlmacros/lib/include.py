@@ -1,16 +1,28 @@
-from yamlmacros import process_macros
-from yamlmacros import get_st_resource
+import sublime
 
-def include(path):
-    with open(path, 'r') as file:
+from yamlmacros import process_macros, macro_options
+
+from yamlmacros.src.util import merge
+
+
+__all__ = ['include', 'include_resource']
+
+
+@macro_options(raw=True)
+def include(node):
+    path_str = yield node
+
+    with open(path_str, 'r') as file:
         return process_macros(
             file.read(),
-            arguments={ "file_path": path },
+            arguments=merge((yield).context, {"file_path": path_str}),
         )
 
-def include_resource(resource):
-    file_path, file_contents = get_st_resource(resource)
+
+@macro_options(raw=True)
+def include_resource(node):
+    path = yield node
     return process_macros(
-        file_contents,
-        arguments={ "file_path": file_path },
+        sublime.load_resource(path),
+        arguments=merge((yield).context, {"file_path": path}),
     )

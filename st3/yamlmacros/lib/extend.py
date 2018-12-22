@@ -1,12 +1,17 @@
 from collections import OrderedDict
 from functools import reduce
+from yamlmacros import macro_options
 
-from yamlmacros import get_yaml_instance
-from ..src.util import deprecated, flatten
+from ..src.util import flatten
+
+
+__all__ = ['merge', 'prepend', 'all', 'apply']
+
 
 class Operation():
     def __init__(self, extension):
         self.extension = extension
+
 
 class Merge(Operation):
     def apply(self, base):
@@ -20,9 +25,11 @@ class Merge(Operation):
 
         return ret
 
+
 class Prepend(Operation):
     def apply(self, base):
         return self.extension + base
+
 
 class All(Operation):
     def apply(self, base):
@@ -32,22 +39,19 @@ class All(Operation):
             base,
         )
 
-def merge(*items): return Merge(OrderedDict(items))
-def prepend(*items): return Prepend(list(items))
-def all(*items): return All(list(items))
+
+@macro_options(apply_args=False)
+def merge(items):
+    return Merge(OrderedDict(items.items()))
+
+
+def prepend(*items):
+    return Prepend(list(items))
+
+
+def all(*items):
+    return All(list(items))
 
 
 def apply(base, *extensions):
     return all(*extensions).apply(base)
-
-@deprecated('Use !apply instead.')
-def extend(*items):
-    extension = OrderedDict(items)
-    base = extension['_base']
-    del extension['_base']
-
-    yaml = get_yaml_instance()
-
-    with open(base, 'r') as base_file:
-        syntax = yaml.load(base_file)
-    return Merge(extension).apply(syntax)

@@ -1,13 +1,19 @@
 import keyword
 from functools import wraps
-import ruamel.yaml
-from inspect import signature, Parameter
+
+
+__all__ = [
+    'fix_keywords', 'apply', 'deprecated', 'flatten', 'merge', 'run_coroutine',
+    'macro_options', 'public_members'
+]
+
 
 def fix_keywords(d):
     return {
-        (k+'_' if keyword.iskeyword(k) else k) : v
+        (k + '_' if keyword.iskeyword(k) else k): v
         for k, v in d.items()
     }
+
 
 def apply(fn, args):
     if isinstance(args, dict):
@@ -16,6 +22,7 @@ def apply(fn, args):
         return fn(*args)
     else:
         return fn(args)
+
 
 def deprecated(*args):
     def _deprecated(f, message=None):
@@ -34,6 +41,7 @@ def deprecated(*args):
     else:
         return lambda f: _deprecated(f, *args)
 
+
 def flatten(*args):
     for arg in args:
         if isinstance(arg, list):
@@ -41,40 +49,45 @@ def flatten(*args):
         elif arg is not None:
             yield arg
 
+
 def merge(*dicts):
     ret = {}
     for d in dicts:
         ret.update(d)
     return ret
 
-def raw_macro(fn):
-    def ret(node, eval, arguments):
-        extras = { 'eval': eval, 'arguments': arguments }
-        extras = {
-            k:v for k, v in extras.items() if k in arg_names
-        }
 
-        if isinstance(node, ruamel.yaml.ScalarNode):
-            return fn(node, **extras)
-        elif isinstance(node, ruamel.yaml.SequenceNode):
-            return fn(*node.value, **extras)
-        elif isinstance(node, ruamel.yaml.MappingNode):
-            kwargs = fix_keywords({ eval(k): v for k, v in node.value })
-            collisions = (set(kwargs) & set(extras))
-            if collisions:
-                raise TypeError('Keyword parameters %s would be shadowed by raw macro parameters.' % str(collisions))
+def run_coroutine(generator, callback):
+    try:
+        result = next(generator)
 
-            return fn(**merge(kwargs, extras))
+        while True:
+            try:
+                value = callback(result)
+            except Exception as ex:
+                result = generator.throw(ex)
+            else:
+                result = generator.send(value)
+    except StopIteration as ex:
+        return ex.value
 
-    if any(
-        param.kind == Parameter.VAR_KEYWORD
-        for name, param in signature(fn).parameters.items()
-    ):
-        raise TypeError('Raw macros using this decorator may not use **kwargs.')
 
-    arg_names = { name for name, param in signature(fn).parameters.items() }
+def macro_options(**kwargs):
+    def decorator(function):
+        function._macro_options = kwargs
+        return function
 
-    ret.raw = True
-    ret.wrapped = fn
+    return decorator
 
-    return ret
+
+def public_members(module):
+    if hasattr(module, '__all__'):
+        is_public = lambda name: name in module.__all__
+    else:
+        is_public = lambda name: not name.startswith('_')
+
+    return {
+        name: value
+        for name, value in module.__dict__.items()
+        if is_public(name)
+    }

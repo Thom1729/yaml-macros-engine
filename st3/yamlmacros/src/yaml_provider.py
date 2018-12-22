@@ -1,26 +1,41 @@
-import ruamel.yaml
+from ruamel.yaml import YAML
+from ruamel.yaml.representer import RoundTripRepresenter
 from collections import OrderedDict
 
-def clone_class(klass):
-    return type(
-        'Cloned' + klass.__name__,
-        (klass, object),
-        {}
-    )
+from .custom_constructor import CustomConstructor
+
+
+__all__ = ['get_yaml_instance', 'get_constructor']
+
+
+class CustomRepresenter(RoundTripRepresenter):
+    pass
+
+
+CustomRepresenter.add_representer(
+    OrderedDict,
+    lambda self, data: self.represent_mapping('tag:yaml.org,2002:map', data)
+)
+
 
 def get_yaml_instance(
-    version = (1, 2),
-    indent = { 'mapping': 2, 'sequence': 4, 'offset': 2 },
+    version=(1, 2),
+    indent={'mapping': 2, 'sequence': 4, 'offset': 2},
     **kwargs
 ):
-    yaml = ruamel.yaml.YAML(**kwargs)
+    yaml = YAML(**kwargs)
 
-    yaml.Constructor = clone_class(yaml.Constructor)
-    yaml.Representer = clone_class(yaml.Representer)
+    yaml.Representer = CustomRepresenter
 
     yaml.version = version
-    yaml.indent(**indent);
-
-    yaml.Representer.add_representer(OrderedDict, lambda self, data: self.represent_mapping('tag:yaml.org,2002:map', data))
+    yaml.indent(**indent)
 
     return yaml
+
+
+def get_constructor():
+    yaml = YAML()
+    yaml._constructor = CustomConstructor(loader=yaml)
+    yaml.version = (1, 2)
+
+    return yaml.constructor

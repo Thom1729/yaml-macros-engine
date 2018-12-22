@@ -1,77 +1,102 @@
-import os
-import sys
 import io
-from inspect import signature, Parameter
+from inspect import signature, isgenerator
 import importlib
-import ruamel.yaml
-import functools
+from functools import partial, lru_cache
+from uuid import uuid4
 
-from .yaml_provider import get_yaml_instance
-from .context import get_context
-from .context import set_context
-from .util import apply, merge
+from ruamel.yaml import Node
+
+from .yaml_provider import get_yaml_instance, get_constructor
+from .util import apply, merge, run_coroutine, public_members
+from .load_macros import temporary_package
+
+
+__all__ = ['MacroError', 'process_macros']
+
 
 class MacroError(Exception):
-    def __init__(self, message, node):
+    def __init__(self, message, node, context=None):
         self.message = message
         self.node = node
-        self.context = get_context()
+        self.context = context
 
-def load_macros(macro_path):
-    sys.path.append(os.getcwd())
-    try:
-        module = importlib.import_module(macro_path)
+
+def load_macros(macro_path, macros_root):
+    package_name = 'yaml_macros_engine_{!s}'.format(uuid4())
+
+    with temporary_package(package_name, macros_root):
+        module = importlib.import_module(macro_path, package_name)
 
         return {
-            name.rstrip('_'): func
-            for name, func in module.__dict__.items()
-            if callable(func) and not name.startswith('_')
+            name.rstrip('_'): get_macro(func)
+            for name, func in public_members(module).items()
         }
-    finally:
-        sys.path.pop()
 
-def apply_transformation(loader, node, transform):
-    if getattr(transform, 'raw', False):
-        def eval(node, arguments=None):
-            if arguments:
-                with set_context(**arguments):
-                    return eval(node)
 
-            return loader.construct_object(node, deep=True)
+def get_macro(function):
+    options = getattr(function, '_macro_options', {})
 
-        return transform(node, arguments=get_context(), eval=eval)
-    else:
-        if isinstance(node, ruamel.yaml.ScalarNode):
-            args = loader.construct_scalar(node)
-        elif isinstance(node, ruamel.yaml.SequenceNode):
-            args = list(loader.construct_yaml_seq(node))[0]
-        elif isinstance(node, ruamel.yaml.MappingNode):
-            args = list(loader.construct_yaml_map(node))[0]
+    if getattr(function, 'raw', False):
+        # Legacy raw macro
+        def wrapped(node):
+            loader = yield
+            kwargs = {
+                'loader': loader,
+                'eval': loader.construct_object,
+                'arguments': loader.context,
+            }
 
-            if any(
-                param.kind == Parameter.VAR_POSITIONAL
-                for name, param in signature(transform).parameters.items()
-            ):
-                # Before Python 3.6, **kwargs will not preserve order.
-                args = list(args.items())
+            return function(node, **{
+                key: value
+                for key, value in kwargs.items()
+                if key in signature(function).parameters
+            })
 
-        return apply(transform, args)
+        return get_macro(wrapped)
 
-def macro_multi_constructor(macros):
-    def multi_constructor(loader, suffix, node):
-        try:
-            macro = macros[suffix]
-        except KeyError as e:
-            raise MacroError('Unknown macro "%s".' % suffix, node) from e
+    def macro(node, loader):
+        if options.get('raw', False):
+            args = loader.construct_raw(node)
+        else:
+            args = loader.construct_object_ignore_tag(node)
 
-        try:
-            return apply_transformation(loader, node, macros[suffix])
-        except Exception as e:
-            raise MacroError('Error in macro execution.', node) from e
+        if options.get('apply_args', True):
+            return apply(function, args)
+        else:
+            return function(args)
 
-    return multi_constructor
+    return macro
 
-@functools.lru_cache(maxsize=16)
+
+def macros_constructor(macros, loader, suffix, node):
+    try:
+        macro = macros[suffix]
+    except KeyError as e:
+        raise MacroError('Unknown macro "%s".' % suffix, node, context=loader.context) from e
+
+    try:
+        def callback(value):
+            if value is None:
+                return loader
+            elif value is node:
+                return loader.construct_object_ignore_tag(value)
+            elif isinstance(value, Node):
+                return loader.construct_object(value)
+            elif isinstance(value, dict):
+                return loader.set_context(**value)
+            else:
+                raise TypeError('Yielded {!r}.'.format(value))
+
+        result = macro(node, loader)
+        if isgenerator(result):
+            return run_coroutine(result, callback)
+        else:
+            return result
+    except Exception as e:
+        raise MacroError('Error in macro execution.', node, context=loader.context) from e
+
+
+@lru_cache(maxsize=16)
 def get_parse(input):
     yaml = get_yaml_instance()
     stream = io.StringIO(input)
@@ -86,20 +111,26 @@ def get_parse(input):
 
     return (tree, macros)
 
-def process_macros(input, arguments={}):
-    with set_context(**arguments):
-        tree, macros = get_parse(input)
 
-        yaml = get_yaml_instance()
+def process_macros(input, arguments={}, *, macros_root=None):
+    tree, macros = get_parse(input)
 
-        for handle, macro_path in macros:
-            macros = merge(*[load_macros(path) for path in macro_path.split(',')])
+    constructor = get_constructor()
 
-            yaml.Constructor.add_multi_constructor(handle,
-                macro_multi_constructor(macros)
-            )
+    for handle, macro_path in macros:
+        macros = merge(*(
+            load_macros(path, macros_root)
+            for path in macro_path.split(',')
+        ))
 
-        return yaml.constructor.construct_document(tree)
+        constructor.add_multi_constructor(
+            handle,
+            partial(macros_constructor, macros)
+        )
+
+    with constructor.set_context(**arguments):
+        return constructor.construct_document(tree)
+
 
 def build_yaml_macros(input, output=None, context=None):
     syntax = process_macros(input, context)

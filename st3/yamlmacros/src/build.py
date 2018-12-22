@@ -6,36 +6,37 @@ from .engine import process_macros
 from .yaml_provider import get_yaml_instance
 from .engine import MacroError
 
-def build(source_text, destination_path, error_stream, arguments, error_highlighter=None):
+
+__all__ = ['build']
+
+
+def build(source_text, destination_path, error_stream=None, arguments={}):
     t0 = time.perf_counter()
 
-    error_stream.write('Building %s... (%s)\n' % (path.basename(arguments['file_path']), arguments['file_path']))
+    def out(*args):
+        if error_stream:
+            print(*args, file=error_stream)
+
+    out('Building %s... (%s)' % (path.basename(arguments['file_path']), arguments['file_path']))
 
     def done(message):
-        error_stream.write('[{message} in {time:.2f} seconds.]\n\n'.format(
+        out('[{message} in {time:.2f} seconds.]\n'.format(
             message=message,
-            time = time.perf_counter() - t0
+            time=time.perf_counter() - t0
         ))
 
     def handle_error(e):
         if isinstance(e, MacroError):
-            error_stream.write('\n')
-            error_stream.write(e.message + '\n')
-            error_stream.write(str(e.node.start_mark) + '\n')
+            out()
+            out(e.message)
+            out(e.node.start_mark)
+            out(e.context)
 
             if e.__cause__:
                 handle_error(e.__cause__)
-
-            if error_highlighter:
-                error_highlighter.highlight(
-                    e.context.get('file_path'),
-                    e.node.start_mark.index,
-                    e.node.end_mark.index,
-                    e.message,
-                )
         else:
-            error_stream.write('\n')
-            error_stream.write(''.join(traceback.format_exception(None, e, e.__traceback__)) + '\n')
+            out()
+            out(''.join(traceback.format_exception(None, e, e.__traceback__)))
 
     try:
         result = process_macros(source_text, arguments=arguments)
@@ -48,5 +49,5 @@ def build(source_text, destination_path, error_stream, arguments, error_highligh
 
     with open(destination_path, 'w') as output_file:
         serializer.dump(result, stream=output_file)
-        error_stream.write('Compiled to %s. (%s)\n' % (path.basename(destination_path), destination_path))
+        out('Compiled to %s. (%s)' % (path.basename(destination_path), destination_path))
         done('Succeeded')
