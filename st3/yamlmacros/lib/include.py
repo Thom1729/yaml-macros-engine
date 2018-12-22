@@ -1,6 +1,6 @@
 import sublime
 
-from yamlmacros import process_macros, raw_macro
+from yamlmacros import process_macros, macro_options
 
 from yamlmacros.src.util import merge
 
@@ -8,22 +8,21 @@ from yamlmacros.src.util import merge
 __all__ = ['include', 'include_resource']
 
 
-@raw_macro
+@macro_options(raw=True)
 def include(node):
-    loader = yield
-    path_str = loader.construct_scalar(node)
+    path_str = yield node
 
     with open(path_str, 'r') as file:
         return process_macros(
             file.read(),
-            arguments=merge(loader.context, {"file_path": path_str}),
+            arguments=merge((yield).context, {"file_path": path_str}),
         )
 
-@raw_macro
+
+@macro_options(raw=True)
 def include_resource(node):
-    loader = yield
-    path = loader.construct_scalar(node)
+    path = yield node
     return process_macros(
         sublime.load_resource(path),
-        arguments=merge(loader.context, {"file_path": path}),
+        arguments=merge((yield).context, {"file_path": path}),
     )

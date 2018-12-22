@@ -2,6 +2,7 @@ from ruamel.yaml import ScalarNode, SequenceNode, MappingNode
 from ruamel.yaml.constructor import RoundTripConstructor
 
 from contextlib import contextmanager
+from .util import fix_keywords
 
 
 __all__ = ['CustomConstructor']
@@ -34,7 +35,7 @@ class CustomConstructor(RoundTripConstructor):
         yield
         self.contexts.pop()
 
-    def construct_value_ignore_tag(self, node):
+    def construct_object_ignore_tag(self, node):
         if isinstance(node, ScalarNode):
             return self.construct_scalar(node)
         elif isinstance(node, SequenceNode):
@@ -43,7 +44,6 @@ class CustomConstructor(RoundTripConstructor):
             return list(self.construct_yaml_map(node))[0]
 
     def construct_raw(self, node):
-        from .util import fix_keywords
         if isinstance(node, ScalarNode):
             return node
         elif isinstance(node, SequenceNode):

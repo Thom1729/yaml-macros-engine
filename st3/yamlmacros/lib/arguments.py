@@ -1,4 +1,4 @@
-from yamlmacros import apply as _apply, raw_macro
+from yamlmacros import apply as _apply, macro_options
 
 import copy
 
@@ -6,34 +6,31 @@ import copy
 __all__ = ['argument', 'if_', 'foreach', 'format']
 
 
-@raw_macro
+@macro_options(raw=True)
 def argument(name, default=None):
-    loader = yield
-    arguments = loader.context
-    if name.value in arguments:
-        return arguments[name.value]
-    elif default:
-        return loader.construct_object(default)
-    else:
-        return None
+    arguments = (yield).context
+    try:
+        return arguments[(yield name)]
+    except KeyError:
+        if default is not None:
+            return (yield default)
+        else:
+            return None
 
 
-@raw_macro
+@macro_options(raw=True)
 def if_(condition, then, else_=None):
-    loader = yield
-    if loader.load_object(condition):
-        return loader.load_object(then)
+    if (yield condition):
+        return (yield then)
     elif else_:
-        return loader.load_object(else_)
+        return (yield else_)
     else:
         return None
-if_.raw = True
 
 
-@raw_macro
+@macro_options(raw=True)
 def foreach(in_, value, *, as_=None):
-    loader = yield
-    collection = loader.construct_object(in_, deep=True)
+    collection = yield in_
 
     if isinstance(collection, dict):
         items = collection.items()
@@ -42,48 +39,37 @@ def foreach(in_, value, *, as_=None):
     else:
         raise TypeError('Invalid collection.')
 
-    key_binding = 'key'
-    value_binding = 'value'
-
     if as_:
-        as_ = loader.construct_object(as_, deep=True)
+        binding_names = yield as_
 
-        if isinstance(as_, dict):
-            key_binding = as_.get('key', None)
-            value_binding = as_.get('value', None)
-        elif isinstance(as_, list):
-            if len(as_) == 1:
+        if isinstance(binding_names, dict):
+            key_binding = binding_names.get('key', None)
+            value_binding = binding_names.get('value', None)
+        elif isinstance(binding_names, list):
+            if len(binding_names) == 1:
                 key_binding = None
-                value_binding = as_[0]
-            elif len(as_) == 2:
-                key_binding = as_[0]
-                value_binding = as_[1]
+                value_binding, = binding_names
+            elif len(binding_names) == 2:
+                key_binding, value_binding = binding_names
         else:
             key_binding = None
-            value_binding = as_
+            value_binding = binding_names
     else:
         key_binding = 'key'
         value_binding = 'value'
 
-    return [
-        _with(loader, copy.deepcopy(value), {
+    ret = []
+    for k, v in items:
+        with (yield {
             key_binding: k,
             value_binding: v,
-        })
-        for k, v in items
-    ]
-
-
-def _with(loader, node, arguments):
-    with loader.set_context(**arguments):
-        return loader.construct_object(node, deep=True)
+        }):
+            ret.append((yield copy.deepcopy(value)))
+    return ret
 
 
 def format(string, bindings=None):
-    loader = yield
-    if bindings:
-        pass
-    else:
-        bindings = loader.context
+    if bindings is None:
+        bindings = (yield).context
 
     return _apply(string.format, bindings)

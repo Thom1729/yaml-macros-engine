@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from functools import reduce
+from yamlmacros import macro_options
 
 from ..src.util import flatten
 
@@ -39,8 +40,9 @@ class All(Operation):
         )
 
 
-def merge(*items):
-    return Merge(OrderedDict(items))
+@macro_options(apply_args=False)
+def merge(items):
+    return Merge(OrderedDict(items.items()))
 
 
 def prepend(*items):

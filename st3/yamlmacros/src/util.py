@@ -1,10 +1,11 @@
 import keyword
 from functools import wraps
-from ruamel.yaml import ScalarNode, SequenceNode, MappingNode
-from inspect import signature, Parameter
 
 
-__all__ = ['apply', 'deprecated', 'raw_macro']
+__all__ = [
+    'fix_keywords', 'apply', 'deprecated', 'flatten', 'merge', 'run_coroutine',
+    'macro_options', 'public_members'
+]
 
 
 def fix_keywords(d):
@@ -71,9 +72,22 @@ def run_coroutine(generator, callback):
         return ex.value
 
 
-def raw_macro(function):
-    function.raw = True
-    return function
+def macro_options(**kwargs):
+    def decorator(function):
+        function._macro_options = kwargs
+        return function
 
-def is_raw_macro(function):
-    return getattr(function, 'raw', False)
+    return decorator
+
+
+def public_members(module):
+    if hasattr(module, '__all__'):
+        is_public = lambda name: name in module.__all__
+    else:
+        is_public = lambda name: not name.startswith('_')
+
+    return {
+        name: value
+        for name, value in module.__dict__.items()
+        if is_public(name)
+    }
