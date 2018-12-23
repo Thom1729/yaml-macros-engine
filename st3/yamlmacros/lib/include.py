@@ -8,20 +8,15 @@ from yamlmacros.src.util import merge
 __all__ = ['include', 'include_resource']
 
 
-@macro_options(raw=True)
-def include(node):
-    path_str = yield node
-
-    with open(path_str, 'r') as file:
+def include(path):
+    with open(path, 'r') as file:
         return process_macros(
             file.read(),
-            arguments=merge((yield).context, {"file_path": path_str}),
+            arguments=merge((yield).context, {"file_path": path}),
         )
 
 
-@macro_options(raw=True)
-def include_resource(node):
-    path = yield node
+def include_resource(path):
     return process_macros(
         sublime.load_resource(path),
         arguments=merge((yield).context, {"file_path": path}),
