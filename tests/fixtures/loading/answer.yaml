@@ -1,0 +1,6 @@
+%YAML 1.2
+---
+relative_1: 'relative_1: test'
+relative_2: 'relative_2: test'
+absolute_1: 'absolute_1: test'
+absolute_2: 'absolute_2: test'

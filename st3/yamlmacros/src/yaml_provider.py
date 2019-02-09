@@ -1,11 +1,12 @@
 from ruamel.yaml import YAML
 from ruamel.yaml.representer import RoundTripRepresenter
+from ruamel.yaml.parser import Parser
 from collections import OrderedDict
 
 from .custom_constructor import CustomConstructor
 
 
-__all__ = ['get_yaml_instance', 'get_constructor']
+__all__ = ['get_yaml_instance']
 
 
 class CustomRepresenter(RoundTripRepresenter):
@@ -26,16 +27,10 @@ def get_yaml_instance(
     yaml = YAML(**kwargs)
 
     yaml.Representer = CustomRepresenter
+    yaml.Parser = Parser
+    yaml._constructor = CustomConstructor(loader=yaml)
 
     yaml.version = version
     yaml.indent(**indent)
 
     return yaml
-
-
-def get_constructor():
-    yaml = YAML()
-    yaml._constructor = CustomConstructor(loader=yaml)
-    yaml.version = (1, 2)
-
-    return yaml.constructor

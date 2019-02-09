@@ -1,0 +1,5 @@
+%YAML 1.2
+%TAG ! tag:yaml-macros:.options:
+---
+test_abc_1: !test_abc [1, 2, 3]
+test_abc_2: !test_abc { c: 3, b: 2, a: 1 }
