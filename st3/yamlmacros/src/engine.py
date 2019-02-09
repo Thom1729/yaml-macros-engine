@@ -1,4 +1,4 @@
-from .yaml_provider import get_yaml_instance, get_constructor
+from .yaml_provider import get_yaml_instance
 from .macro_provider import MacroProvider
 
 
@@ -13,7 +13,7 @@ class MacroError(Exception):
 
 
 def process_macros(input, arguments={}, *, macros_root=None):
-    yaml = get_constructor()
+    yaml = get_yaml_instance()
 
     provider = MacroProvider(macros_root)
 
