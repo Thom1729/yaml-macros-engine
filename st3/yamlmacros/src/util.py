@@ -3,8 +3,7 @@ from functools import wraps
 
 
 __all__ = [
-    'fix_keywords', 'apply', 'deprecated', 'flatten', 'merge', 'run_coroutine',
-    'macro_options', 'public_members'
+    'fix_keywords', 'apply', 'deprecated', 'flatten', 'merge', 'run_coroutine'
 ]
 
 
@@ -70,24 +69,3 @@ def run_coroutine(generator, callback):
                 result = generator.send(value)
     except StopIteration as ex:
         return ex.value
-
-
-def macro_options(**kwargs):
-    def decorator(function):
-        function._macro_options = kwargs
-        return function
-
-    return decorator
-
-
-def public_members(module):
-    if hasattr(module, '__all__'):
-        is_public = lambda name: name in module.__all__
-    else:
-        is_public = lambda name: not name.startswith('_')
-
-    return {
-        name: value
-        for name, value in module.__dict__.items()
-        if is_public(name)
-    }

@@ -1,6 +1,6 @@
 import sublime
 
-from yamlmacros import process_macros, macro_options
+from yamlmacros import process_macros
 
 from yamlmacros.src.util import merge
 

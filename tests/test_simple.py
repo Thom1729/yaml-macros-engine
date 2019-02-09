@@ -20,7 +20,7 @@ class TestSyntaxes(TestCase):
 
         result = process_macros(
             source_text,
-            relative_root=str(fixtures.file_path())
+            macros_root=str(fixtures.file_path())
         )
 
         out = StringIO()
@@ -33,3 +33,9 @@ class TestSyntaxes(TestCase):
 
     def test_simple(self):
         self._test_fixture('simple')
+
+    def test_loading(self):
+        self._test_fixture('loading')
+
+    def test_options(self):
+        self._test_fixture('options')

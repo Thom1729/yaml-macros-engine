@@ -1,0 +1,7 @@
+%YAML 1.2
+%TAG ! tag:yaml-macros:.relative_1,yaml_macros_engine.tests.fixtures.loading.absolute_1:
+---
+relative_1: !relative_1 test
+relative_2: !<tag:yaml-macros:.relative_2:relative_2> test
+absolute_1: !absolute_1 test
+absolute_2: !<tag:yaml-macros:.absolute_2:absolute_2> test
