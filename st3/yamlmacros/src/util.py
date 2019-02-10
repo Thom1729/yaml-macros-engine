@@ -1,20 +1,28 @@
-import keyword
-from functools import wraps
+from keyword import iskeyword
+
+try:
+    from typing import Callable, Generator, TypeVar
+except ImportError:
+    pass
+else:
+    _YieldType = TypeVar('_YieldType')
+    _SendType = TypeVar('_SendType')
+    _ReturnType = TypeVar('_ReturnType')
 
 
 __all__ = [
-    'fix_keywords', 'apply', 'deprecated', 'flatten', 'merge', 'run_coroutine'
+    'fix_keywords', 'apply', 'flatten', 'merge', 'run_coroutine'
 ]
 
 
-def fix_keywords(d):
+def fix_keywords(d: dict) -> dict:
     return {
-        (k + '_' if keyword.iskeyword(k) else k): v
+        (k + '_' if iskeyword(k) else k): v
         for k, v in d.items()
     }
 
 
-def apply(fn, args):
+def apply(fn: 'Callable[..., _ReturnType]', args: object) -> '_ReturnType':
     if isinstance(args, dict):
         return fn(**fix_keywords(args))
     elif isinstance(args, list):
@@ -23,25 +31,7 @@ def apply(fn, args):
         return fn(args)
 
 
-def deprecated(*args):
-    def _deprecated(f, message=None):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            print('Warning: {name} is deprecated.{message}'.format(
-                name=f.__name__,
-                message=(' ' + message) if message else '',
-            ))
-            return f(*args, **kwargs)
-
-        return wrapper
-
-    if len(args) == 1 and callable(args[0]):
-        return _deprecated(args[0])
-    else:
-        return lambda f: _deprecated(f, *args)
-
-
-def flatten(*args):
+def flatten(*args: object) -> 'Generator':
     for arg in args:
         if isinstance(arg, list):
             yield from flatten(*arg)
@@ -49,14 +39,17 @@ def flatten(*args):
             yield arg
 
 
-def merge(*dicts):
+def merge(*dicts: dict) -> dict:
     ret = {}
     for d in dicts:
         ret.update(d)
     return ret
 
 
-def run_coroutine(generator, callback):
+def run_coroutine(
+    generator: 'Generator[_YieldType, _SendType, _ReturnType]',
+    callback: 'Callable[[_YieldType], _SendType]'
+) -> '_ReturnType':
     try:
         result = next(generator)
 
@@ -64,7 +57,7 @@ def run_coroutine(generator, callback):
             try:
                 value = callback(result)
             except Exception as ex:
-                result = generator.throw(ex)
+                result = generator.throw(type(ex), ex, ex.__traceback__)
             else:
                 result = generator.send(value)
     except StopIteration as ex:

@@ -10,22 +10,27 @@ from .engine import MacroError
 __all__ = ['build']
 
 
-def build(source_text, destination_path, error_stream=None, arguments={}):
+def build(
+    source_text: str,
+    destination_path: str,
+    error_stream: None = None,
+    arguments: dict = {}
+) -> None:
     t0 = time.perf_counter()
 
-    def out(*args):
+    def out(*args: object) -> None:
         if error_stream:
             print(*args, file=error_stream)
 
     out('Building %s... (%s)' % (path.basename(arguments['file_path']), arguments['file_path']))
 
-    def done(message):
+    def done(message: str) -> None:
         out('[{message} in {time:.2f} seconds.]\n'.format(
             message=message,
             time=time.perf_counter() - t0
         ))
 
-    def handle_error(e):
+    def handle_error(e: BaseException) -> None:
         if isinstance(e, MacroError):
             out()
             out(e.message)

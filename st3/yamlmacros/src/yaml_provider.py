@@ -5,6 +5,12 @@ from collections import OrderedDict
 
 from .custom_constructor import CustomConstructor
 
+try:
+    from typing import Any
+    from ruamel.yaml.compat import VersionType
+except ImportError:
+    pass
+
 
 __all__ = ['get_yaml_instance']
 
@@ -20,17 +26,17 @@ CustomRepresenter.add_representer(
 
 
 def get_yaml_instance(
-    version=(1, 2),
-    indent={'mapping': 2, 'sequence': 4, 'offset': 2},
-    **kwargs
-):
+    version: 'VersionType' = (1, 2),
+    indent: 'Any' = {'mapping': 2, 'sequence': 4, 'offset': 2},
+    **kwargs: 'Any'
+) -> YAML:
     yaml = YAML(**kwargs)
 
     yaml.Representer = CustomRepresenter
     yaml.Parser = Parser
-    yaml._constructor = CustomConstructor(loader=yaml)
+    yaml._constructor = CustomConstructor(loader=yaml)  # type: ignore
 
-    yaml.version = version
+    yaml.version = version  # type: ignore
     yaml.indent(**indent)
 
     return yaml
