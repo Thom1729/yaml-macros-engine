@@ -3,7 +3,7 @@ from yamlmacros import apply as _apply, macro_options
 import copy
 
 
-__all__ = ['argument', 'if_', 'foreach', 'format']
+__all__ = ['argument', 'if_', 'with_', 'foreach', 'format']
 
 
 @macro_options(raw=True)
@@ -16,6 +16,12 @@ def argument(name, default=None):
             return (yield default)
         else:
             return None
+
+
+@macro_options(raw=True)
+def with_(context, value):
+    with (yield (yield context)):
+        return (yield value)
 
 
 @macro_options(raw=True)

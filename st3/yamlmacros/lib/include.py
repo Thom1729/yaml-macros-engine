@@ -17,7 +17,12 @@ def include(path):
 
 
 def include_resource(path):
+    try:
+        text = sublime.load_resource(path)
+    except IOError:
+        raise FileNotFoundError(path)
+
     return process_macros(
-        sublime.load_resource(path),
+        text,
         arguments=merge((yield).context, {"file_path": path}),
     )
