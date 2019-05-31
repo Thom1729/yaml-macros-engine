@@ -36,7 +36,7 @@ def macro_constructor(loader: 'CustomConstructor', suffix: str, node: 'Node'):
 class CustomConstructor(RoundTripConstructor):
     _contexts = None  # type: List[ContextType]
 
-    def __init__(self, loader, *, macros_root, context = {}) -> None:
+    def __init__(self, loader, *, macros_root = None, context = {}) -> None:
         super().__init__(loader=loader)
 
         self._contexts = [context]

@@ -2,9 +2,8 @@ import traceback
 import time
 from os import path
 
-from .engine import process_macros
-from .yaml_provider import get_yaml_instance
-from .engine import MacroError
+from .yaml_provider import get_yaml_instance, get_loader
+from .macro_error import MacroError
 
 
 __all__ = ['build']
@@ -44,7 +43,10 @@ def build(
             out(''.join(traceback.format_exception(None, e, e.__traceback__)))
 
     try:
-        result = process_macros(source_text, arguments=arguments)
+        yaml = get_loader(context=arguments)
+
+        result = yaml.load(source_text)
+        # result = process_macros(source_text, arguments=arguments)
     except Exception as e:
         handle_error(e)
         done('Failed')

@@ -1,18 +1,15 @@
 from .yaml_provider import get_yaml_instance, get_loader
 from .macro_provider import MacroProvider
-from .macro_error import MacroError
 
 try:
     from typing import Any, Optional
-    from ruamel.yaml import YAML, Node
     from ruamel.yaml.compat import StreamTextType, StreamType
-    from .custom_constructor import CustomConstructor
     from .types import ContextType
 except ImportError:
     pass
 
 
-__all__ = ['MacroError', 'process_macros']
+__all__ = ['process_macros']
 
 
 def process_macros(
