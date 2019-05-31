@@ -43,7 +43,7 @@ def foreach(in_, value, *, as_=None):
     elif isinstance(collection, list):
         items = list(enumerate(collection))
     else:
-        raise TypeError('Invalid collection.')
+        raise TypeError('Invalid collection {!r}.'.format(collection))
 
     if as_:
         binding_names = yield as_
