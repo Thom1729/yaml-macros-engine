@@ -32,11 +32,18 @@ def get_yaml_instance(
 ) -> YAML:
     yaml = YAML(**kwargs)
 
-    yaml.Representer = CustomRepresenter
-    yaml.Parser = Parser
-    yaml._constructor = CustomConstructor(loader=yaml)  # type: ignore
-
     yaml.version = version  # type: ignore
+    yaml.Representer = CustomRepresenter
+
     yaml.indent(**indent)
+
+    return yaml
+
+def get_loader(*args, **kwargs) -> YAML:
+    yaml = YAML()
+    yaml.version = (1, 2)  # type: ignore
+
+    yaml.Parser = Parser
+    yaml._constructor = CustomConstructor(yaml, *args, **kwargs)  # type: ignore
 
     return yaml

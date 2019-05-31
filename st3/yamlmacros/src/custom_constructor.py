@@ -1,6 +1,9 @@
 from ruamel.yaml import Node, ScalarNode, SequenceNode, MappingNode
 from ruamel.yaml.constructor import RoundTripConstructor
 
+from .macro_provider import MacroProvider
+from .macro_error import MacroError
+
 from contextlib import contextmanager
 from .util import fix_keywords
 
@@ -15,22 +18,34 @@ except ImportError:
 __all__ = ['CustomConstructor']
 
 
+def macro_constructor(loader: 'CustomConstructor', suffix: str, node: 'Node'):
+    def error(message: str) -> MacroError:
+        return MacroError(message, node, context=loader.context)
+
+    try:
+        macro = loader.macro_provider.get_macro(suffix)
+    except Exception as ex:
+        raise error('Unknown macro {!r}.'.format(suffix)) from ex
+
+    try:
+        return macro(loader, node)
+    except Exception as ex:
+        raise error('Error in macro execution.') from ex
+
+
 class CustomConstructor(RoundTripConstructor):
     _contexts = None  # type: List[ContextType]
 
-    def __init__(self, *args: 'Any', **kwargs: 'Any') -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, loader, *, macros_root, context = {}) -> None:
+        super().__init__(loader=loader)
 
-        self.yaml_constructors = RoundTripConstructor.yaml_constructors.copy()
-        self.yaml_multi_constructors = RoundTripConstructor.yaml_multi_constructors.copy()
+        self._contexts = [context]
 
-        self._contexts = [{}]
+        self.macro_provider = MacroProvider(macros_root)
 
-    def add_constructor(self, tag: 'str', constructor: 'MacroType') -> None:
-        self.yaml_constructors[tag] = constructor
-
-    def add_multi_constructor(self, tag: 'str', constructor: 'MultiConstructorType') -> None:
-        self.yaml_multi_constructors[tag] = constructor
+        self.yaml_multi_constructors = {
+            'tag:yaml-macros:': macro_constructor
+        }
 
     @property
     def context(self) -> 'ContextType':
