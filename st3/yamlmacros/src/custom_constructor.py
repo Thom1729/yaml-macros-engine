@@ -1,4 +1,4 @@
-from ruamel.yaml import Node, ScalarNode, SequenceNode, MappingNode
+from ruamel.yaml import Node, ScalarNode, SequenceNode, MappingNode, YAML
 from ruamel.yaml.constructor import RoundTripConstructor
 
 from .macro_provider import MacroProvider
@@ -8,8 +8,8 @@ from contextlib import contextmanager
 from .util import fix_keywords
 
 try:
-    from typing import Any, Callable, Generator, List
-    from .types import ContextType, MacroType
+    from typing import Generator, List
+    from .types import ContextType
     MultiConstructorType = 'Callable[[CustomConstructor, str, Node], object]'
 except ImportError:
     pass
@@ -18,7 +18,7 @@ except ImportError:
 __all__ = ['CustomConstructor']
 
 
-def macro_constructor(loader: 'CustomConstructor', suffix: str, node: 'Node'):
+def macro_constructor(loader: 'CustomConstructor', suffix: str, node: 'Node') -> object:
     def error(message: str) -> MacroError:
         return MacroError(message, node, context=loader.context)
 
@@ -36,7 +36,13 @@ def macro_constructor(loader: 'CustomConstructor', suffix: str, node: 'Node'):
 class CustomConstructor(RoundTripConstructor):
     _contexts = None  # type: List[ContextType]
 
-    def __init__(self, loader, *, macros_root = None, context = {}) -> None:
+    def __init__(
+        self,
+        loader: YAML,
+        *,
+        macros_root: str = None,
+        context: 'ContextType' = {}
+    ) -> None:
         super().__init__(loader=loader)
 
         self._contexts = [context]

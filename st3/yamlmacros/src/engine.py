@@ -1,5 +1,4 @@
 from .yaml_provider import get_yaml_instance, get_loader
-from .macro_provider import MacroProvider
 
 try:
     from typing import Any, Optional
