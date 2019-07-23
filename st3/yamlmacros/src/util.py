@@ -1,13 +1,9 @@
 from keyword import iskeyword
 
-try:
-    from typing import Callable, Generator, TypeVar
-except ImportError:
-    pass
-else:
-    _YieldType = TypeVar('_YieldType')
-    _SendType = TypeVar('_SendType')
-    _ReturnType = TypeVar('_ReturnType')
+from .compat.typing import Callable, Generator, TypeVar
+_YieldType = TypeVar('_YieldType')
+_SendType = TypeVar('_SendType')
+_ReturnType = TypeVar('_ReturnType')
 
 
 __all__ = [
@@ -47,9 +43,9 @@ def merge(*dicts: dict) -> dict:
 
 
 def run_coroutine(
-    generator: 'Generator[_YieldType, _SendType, _ReturnType]',
-    callback: 'Callable[[_YieldType], _SendType]'
-) -> '_ReturnType':
+    generator: Generator[_YieldType, _SendType, _ReturnType],
+    callback: Callable[[_YieldType], _SendType]
+) -> _ReturnType:
     try:
         result = next(generator)
 

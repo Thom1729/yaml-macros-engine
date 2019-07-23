@@ -1,19 +1,15 @@
 from .yaml_provider import get_yaml_instance, get_loader
 
-try:
-    from typing import Any, Optional
-    from ruamel.yaml.compat import StreamTextType, StreamType
-    from .types import ContextType
-except ImportError:
-    pass
+from .compat.typing import Any, Optional
+from .types import ContextType, StreamTextType, StreamType
 
 
 __all__ = ['process_macros']
 
 
 def process_macros(
-    input: 'StreamTextType',
-    arguments: 'ContextType' = {},
+    input: StreamTextType,
+    arguments: ContextType = {},
     *,
     macros_root: str = None
 ) -> 'Any':
@@ -23,9 +19,9 @@ def process_macros(
 
 
 def build_yaml_macros(
-    input: 'StreamTextType',
-    output: 'Optional[StreamType]' = None,
-    context: 'ContextType' = {}
+    input: StreamTextType,
+    output: Optional[StreamType] = None,
+    context: ContextType = {}
 ) -> None:
     syntax = process_macros(input, context)
     yaml = get_yaml_instance()

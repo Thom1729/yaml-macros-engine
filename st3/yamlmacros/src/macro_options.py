@@ -1,10 +1,7 @@
-ATTRIBUTE = '_macro_options'
+from .compat.typing import Callable, TypeVar
+_T = TypeVar('_T')
 
-try:
-    from typing import Callable, TypeVar
-    _T = TypeVar('_T')
-except ImportError:
-    pass
+ATTRIBUTE = '_macro_options'
 
 
 __all__ = ['macro_options', 'get_macro_options']

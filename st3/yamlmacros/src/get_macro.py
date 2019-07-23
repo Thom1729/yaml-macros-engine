@@ -5,16 +5,12 @@ from ruamel.yaml import Node
 from .macro_options import get_macro_options
 from .util import apply, run_coroutine
 
-try:
-    from typing import Callable
-    from .custom_constructor import CustomConstructor
-except ImportError:
-    pass
-else:
-    MacroType = Callable[[CustomConstructor, Node], object]
+from .compat.typing import Callable
+from .custom_constructor import CustomConstructor
+from .types import MacroType
 
 
-def get_macro(function: 'Callable') -> 'MacroType':
+def get_macro(function: Callable) -> MacroType:
     if getattr(function, 'raw', False):
         # Legacy raw macro
         def wrapped(loader: 'CustomConstructor', node: Node) -> object:
@@ -36,11 +32,11 @@ def get_macro(function: 'Callable') -> 'MacroType':
 
 
 def get_macro_x(
-    function: 'Callable',
+    function: Callable,
     *,
     raw: bool = False,
     apply_args: bool = True
-) -> 'MacroType':
+) -> MacroType:
     def macro(loader: 'CustomConstructor', node: Node) -> object:
         if raw:
             args = loader.construct_raw(node)
@@ -52,9 +48,7 @@ def get_macro_x(
         else:
             result = function(args)
 
-        # def callback(value: object) -> object:
-        def callback(value):
-            # type: (object) -> object
+        def callback(value: object) -> object:
             if value is None:
                 return loader
             elif isinstance(value, Node):

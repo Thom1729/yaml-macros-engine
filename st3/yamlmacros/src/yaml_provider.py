@@ -3,14 +3,11 @@ from ruamel.yaml.representer import RoundTripRepresenter
 from ruamel.yaml.parser import Parser
 from collections import OrderedDict
 
+from .macro_provider import MacroProvider
 from .custom_constructor import CustomConstructor
 
-try:
-    from typing import Any
-    from .types import ContextType
-    from ruamel.yaml.compat import VersionType
-except ImportError:
-    pass
+from .compat.typing import Any
+from .types import ContextType, VersionType
 
 
 __all__ = ['get_yaml_instance']
@@ -27,9 +24,9 @@ CustomRepresenter.add_representer(
 
 
 def get_yaml_instance(
-    version: 'VersionType' = (1, 2),
-    indent: 'Any' = {'mapping': 2, 'sequence': 4, 'offset': 2},
-    **kwargs: 'Any'
+    version: VersionType = (1, 2),
+    indent: Any = {'mapping': 2, 'sequence': 4, 'offset': 2},
+    **kwargs: Any
 ) -> YAML:
     yaml = YAML(**kwargs)
 
@@ -41,14 +38,15 @@ def get_yaml_instance(
     return yaml
 
 
-def get_loader(macros_root: str = None, context: 'ContextType' = {}) -> YAML:
+def get_loader(macros_root: str = None, context: ContextType = {}) -> YAML:
     yaml = YAML()
     yaml.version = (1, 2)  # type: ignore
 
     yaml.Parser = Parser
     yaml._constructor = CustomConstructor(  # type: ignore
         yaml,
-        macros_root=macros_root,
+        # macros_root=macros_root,
+        macro_provider=MacroProvider(macros_root).get_macro,
         context=context
     )
 

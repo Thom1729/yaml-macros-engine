@@ -1,29 +1,24 @@
 from ruamel.yaml import Node, ScalarNode, SequenceNode, MappingNode, YAML
 from ruamel.yaml.constructor import RoundTripConstructor
 
-from .macro_provider import MacroProvider
 from .macro_error import MacroError
 
 from contextlib import contextmanager
 from .util import fix_keywords
 
-try:
-    from typing import Generator, List
-    from .types import ContextType
-    MultiConstructorType = 'Callable[[CustomConstructor, str, Node], object]'
-except ImportError:
-    pass
+from .compat.typing import Callable, Generator, List
+from .types import ContextType
 
 
 __all__ = ['CustomConstructor']
 
 
-def macro_constructor(loader: 'CustomConstructor', suffix: str, node: 'Node') -> object:
+def macro_constructor(loader: 'CustomConstructor', suffix: str, node: Node) -> object:
     def error(message: str) -> MacroError:
         return MacroError(message, node, context=loader.context)
 
     try:
-        macro = loader.macro_provider.get_macro(suffix)
+        macro = loader.macro_provider(suffix)
     except Exception as ex:
         raise error('Unknown macro {!r}.'.format(suffix)) from ex
 
@@ -40,25 +35,25 @@ class CustomConstructor(RoundTripConstructor):
         self,
         loader: YAML,
         *,
-        macros_root: str = None,
-        context: 'ContextType' = {}
+        macro_provider: Callable[[str], Callable],
+        context: ContextType = {}
     ) -> None:
         super().__init__(loader=loader)
 
         self._contexts = [context]
 
-        self.macro_provider = MacroProvider(macros_root)
+        self.macro_provider = macro_provider
 
         self.yaml_multi_constructors = {
             'tag:yaml-macros:': macro_constructor
         }
 
     @property
-    def context(self) -> 'ContextType':
+    def context(self) -> ContextType:
         return self._contexts[-1]
 
     @contextmanager
-    def set_context(self, **kwargs: object) -> 'Generator':
+    def set_context(self, **kwargs: object) -> Generator:
         m = dict(self.context.items())
         m.update(**kwargs)
         self._contexts.append(m)
