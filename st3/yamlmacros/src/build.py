@@ -1,12 +1,13 @@
 import traceback
 import time
 from os import path
+from io import StringIO
 
 from .yaml_provider import get_yaml_instance, get_loader
 from .macro_error import MacroError
 
 
-__all__ = ['build']
+__all__ = ['build', 'builds']
 
 
 def build(
@@ -43,18 +44,29 @@ def build(
             out(''.join(traceback.format_exception(None, e, e.__traceback__)))
 
     try:
-        yaml = get_loader(context=arguments)
-
-        result = yaml.load(source_text)
-        # result = process_macros(source_text, arguments=arguments)
+        string = builds(source_text, arguments)
     except Exception as e:
         handle_error(e)
         done('Failed')
         return
 
+    with open(destination_path, 'w') as output_file:
+        output_file.write(string)
+
+    out('Compiled to %s. (%s)' % (path.basename(destination_path), destination_path))
+    done('Succeeded')
+
+
+def builds(
+    source_text: str,
+    arguments: dict = {}
+) -> str:
+    yaml = get_loader(context=arguments)
+
+    result = yaml.load(source_text)
+
     serializer = get_yaml_instance()
 
-    with open(destination_path, 'w') as output_file:
-        serializer.dump(result, stream=output_file)
-        out('Compiled to %s. (%s)' % (path.basename(destination_path), destination_path))
-        done('Succeeded')
+    stream = StringIO()
+    serializer.dump(result, stream=stream)
+    return stream.getvalue()
